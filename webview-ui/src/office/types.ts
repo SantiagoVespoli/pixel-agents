@@ -196,4 +196,6 @@ export interface Character {
   inputTokens: number;
   /** Cumulative output tokens consumed */
   outputTokens: number;
+  /** Puertos de servers locales que el agente abrió (fork feature) */
+  ports?: string[];
 }

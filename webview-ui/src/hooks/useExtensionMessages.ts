@@ -510,6 +510,8 @@ export function useExtensionMessages(
       } else if (msg.type === 'agentTokenUsage') {
         const id = msg.id as number;
         os.setAgentTokens(id, msg.inputTokens as number, msg.outputTokens as number);
+      } else if (msg.type === 'agentPortsUpdate') {
+        os.setAgentPorts(msg.id as number, msg.ports as string[]);
       }
     };
     const unsubscribe = transport.onMessage(handler);

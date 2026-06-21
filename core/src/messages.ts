@@ -3,57 +3,13 @@
  *
  * Run `npm run asyncapi:generate` to regenerate.
  *
- * Source of truth: the yaml at core/asyncapi.yaml.
+ * Source of truth: the yaml at core/asyncapi.yaml. 
  * Editors and clients in any language can consume the spec directly.
  */
 
-export type ServerMessage =
-  | ProviderCapabilities
-  | AgentCreated
-  | AgentClosed
-  | AgentSelected
-  | ExistingAgents
-  | AgentStatus
-  | AgentToolStart
-  | AgentToolDone
-  | AgentToolsClear
-  | AgentToolPermission
-  | AgentToolPermissionClear
-  | SubagentToolStart
-  | SubagentToolDone
-  | SubagentClear
-  | SubagentToolPermission
-  | AgentTeamInfo
-  | AgentTokenUsage
-  | LayoutLoaded
-  | FurnitureAssetsLoaded
-  | CharacterSpritesLoaded
-  | FloorTilesLoaded
-  | WallTilesLoaded
-  | SettingsLoaded
-  | ExternalAssetDirectoriesUpdated
-  | WorkspaceFolders
-  | AgentDiagnostics;
+export type ServerMessage = ProviderCapabilities | AgentCreated | AgentClosed | AgentSelected | ExistingAgents | AgentStatus | AgentToolStart | AgentToolDone | AgentToolsClear | AgentToolPermission | AgentToolPermissionClear | SubagentToolStart | SubagentToolDone | SubagentClear | SubagentToolPermission | AgentTeamInfo | AgentTokenUsage | AgentPortsUpdate | LayoutLoaded | FurnitureAssetsLoaded | CharacterSpritesLoaded | FloorTilesLoaded | WallTilesLoaded | SettingsLoaded | ExternalAssetDirectoriesUpdated | WorkspaceFolders | AgentDiagnostics;
 
-export type ClientMessage =
-  | WebviewReady
-  | LaunchAgent
-  | FocusAgent
-  | CloseAgent
-  | SaveAgentSeats
-  | SaveLayout
-  | SetSoundEnabled
-  | SetLastSeenVersion
-  | SetAlwaysShowLabels
-  | SetHooksEnabled
-  | SetHooksInfoShown
-  | SetWatchAllSessions
-  | ExportLayout
-  | ImportLayout
-  | OpenSessionsFolder
-  | AddExternalAssetDirectory
-  | RemoveExternalAssetDirectory
-  | RequestDiagnostics;
+export type ClientMessage = WebviewReady | LaunchAgent | FocusAgent | CloseAgent | SaveAgentSeats | SaveLayout | SetSoundEnabled | SetLastSeenVersion | SetAlwaysShowLabels | SetHooksEnabled | SetHooksInfoShown | SetWatchAllSessions | ExportLayout | ImportLayout | OpenSessionsFolder | AddExternalAssetDirectory | RemoveExternalAssetDirectory | RequestDiagnostics;
 
 export interface ProviderCapabilities {
   type: 'providerCapabilities';
@@ -98,7 +54,7 @@ export interface AgentStatus {
   status: AgentActivityStatus;
 }
 
-export type AgentActivityStatus = 'active' | 'waiting';
+export type AgentActivityStatus = "active" | "waiting";
 
 export interface AgentToolStart {
   type: 'agentToolStart';
@@ -173,6 +129,12 @@ export interface AgentTokenUsage {
   id: number;
   inputTokens: number;
   outputTokens: number;
+}
+
+export interface AgentPortsUpdate {
+  type: 'agentPortsUpdate';
+  id: number;
+  ports: string[];
 }
 
 export interface LayoutLoaded {

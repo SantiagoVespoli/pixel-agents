@@ -4,6 +4,7 @@ import type { AgentEvent, HookProvider } from '../../core/src/provider.js';
 import type { AgentStateStore } from './agentStateStore.js';
 import { SESSION_END_GRACE_MS } from './constants.js';
 import type { SessionRouter } from './sessionRouter.js';
+import { detectPorts } from './portDetector.js';
 import { getInlineTeammates, hasInlineTeammates } from './teamUtils.js';
 import { cancelPermissionTimer, cancelWaitingTimer } from './timerManager.js';
 import type { AgentState } from './types.js';
@@ -314,7 +315,7 @@ export class HookEventHandler {
         // Both PostToolUse and PostToolUseFailure normalize to toolEnd. Distinguishing
         // them inside handlers would require extra info; the existing behavior was
         // identical for both (agentToolDone + clear currentHookToolId), so one branch suffices.
-        return this.handlePostToolUse(agent, agentId);
+        return this.handlePostToolUse(agent, agentId, event);
       case 'subagentStart':
         return this.provider.team ? this.handleSubagentStart(event, agent, agentId) : undefined;
       case 'subagentEnd':
@@ -397,6 +398,11 @@ export class HookEventHandler {
     const status = this.provider.formatToolStatus(toolName, toolInput);
     const hookToolId = `hook-${Date.now()}`;
 
+    // Detectar puertos de servers locales desde el comando Bash (fork feature)
+    if (toolName === 'Bash') {
+      this.recordPorts(agent, agentId, (toolInput as { command?: string }).command);
+    }
+
     // Track for PostToolUse/SubagentStart correlation (always, even if suppressed below).
     // currentHookIsTeammateSpawn is the authoritative teammate-vs-subagent discriminator.
     // It is NOT cleared in PostToolUse to survive the PostToolUse-before-SubagentStart race.
@@ -442,7 +448,7 @@ export class HookEventHandler {
    * Stop hook handles the idle transition. This is here for completeness and
    * to serve as a confirmation event for pending external sessions.
    */
-  private handlePostToolUse(agent: AgentState, agentId: number): void {
+  private handlePostToolUse(agent: AgentState, agentId: number, rawEvent?: HookEvent): void {
     if (agent.currentHookToolId) {
       // Suppress tool display when lead has inline teammates (see handlePreToolUse)
       if (!hasInlineTeammates(agentId, this.agents)) {
@@ -454,6 +460,40 @@ export class HookEventHandler {
       }
       agent.currentHookToolId = undefined;
       agent.currentHookToolName = undefined;
+    }
+
+    // Detectar puertos desde la salida del comando Bash (fork feature)
+    if (rawEvent && rawEvent.tool_name === 'Bash') {
+      const input = JSON.stringify(rawEvent.tool_input ?? '');
+      const resp =
+        typeof rawEvent.tool_response === 'string'
+          ? rawEvent.tool_response
+          : JSON.stringify(rawEvent.tool_response ?? '');
+      this.recordPorts(agent, agentId, `${input}\n${resp}`);
+    }
+  }
+
+  /**
+   * Detecta puertos de servers locales en un texto (comando o salida). Si hay
+   * nuevos, los acumula en el agente y avisa a la webview. (Fork feature.)
+   */
+  private recordPorts(agent: AgentState, agentId: number, text: string | undefined): void {
+    const found = detectPorts(text);
+    if (found.length === 0) return;
+    if (!agent.openPorts) agent.openPorts = new Set<string>();
+    let changed = false;
+    for (const p of found) {
+      if (!agent.openPorts.has(p)) {
+        agent.openPorts.add(p);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.agents.broadcast({
+        type: 'agentPortsUpdate',
+        id: agentId,
+        ports: [...agent.openPorts],
+      });
     }
   }
 

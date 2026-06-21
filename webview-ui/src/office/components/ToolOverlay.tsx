@@ -108,6 +108,37 @@ export function ToolOverlay({
 
   return (
     <>
+      {/* Cartelitos de puertos de servers locales: SIEMPRE visibles (fork feature) */}
+      {agents.map((id) => {
+        const ch = officeState.characters.get(id);
+        if (!ch || !ch.ports || ch.ports.length === 0) return null;
+        const sittingOffset = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
+        const screenX = (deviceOffsetX + ch.x * zoom) / dpr;
+        const screenY = (deviceOffsetY + (ch.y + sittingOffset + 8) * zoom) / dpr;
+        return (
+          <div
+            key={`ports-${id}`}
+            className="absolute -translate-x-1/2 flex flex-col items-center gap-1"
+            style={{ left: screenX, top: screenY, pointerEvents: 'none', zIndex: 40 }}
+          >
+            {ch.ports.map((p) => (
+              <span
+                key={p}
+                className="pixel-panel whitespace-nowrap"
+                style={{
+                  fontSize: '13px',
+                  fontFamily: 'monospace',
+                  color: '#3ddc84',
+                  padding: '1px 6px',
+                  lineHeight: 1.2,
+                }}
+              >
+                🌐 {p}
+              </span>
+            ))}
+          </div>
+        );
+      })}
       {allIds.map((id) => {
         const ch = officeState.characters.get(id);
         if (!ch) return null;

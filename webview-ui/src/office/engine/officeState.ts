@@ -711,6 +711,12 @@ export class OfficeState {
     ch.outputTokens = outputTokens;
   }
 
+  /** Setea los puertos de servers locales del agente (fork feature). */
+  setAgentPorts(id: number, ports: string[]): void {
+    const ch = this.characters.get(id);
+    if (ch) ch.ports = ports;
+  }
+
   update(dt: number): void {
     // Furniture animation cycling
     const prevFrame = Math.floor(this.furnitureAnimTimer / FURNITURE_ANIM_INTERVAL_SEC);

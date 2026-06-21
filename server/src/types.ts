@@ -51,6 +51,10 @@ export interface AgentState {
   inputTokens: number;
   outputTokens: number;
 
+  // -- Local servers / ports (fork feature) --
+  /** Puertos de servers locales que el agente abrió, detectados de su actividad Bash. */
+  openPorts?: Set<string>;
+
   // -- Agent Teams --
   teamName?: string;
   agentName?: string;

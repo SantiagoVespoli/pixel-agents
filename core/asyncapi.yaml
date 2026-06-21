@@ -99,6 +99,8 @@ components:
         # Agent Teams
         - $ref: '#/components/schemas/AgentTeamInfo'
         - $ref: '#/components/schemas/AgentTokenUsage'
+        # Local servers / ports opened by the agent (fork feature)
+        - $ref: '#/components/schemas/AgentPortsUpdate'
         # Layout
         - $ref: '#/components/schemas/LayoutLoaded'
         # Assets
@@ -406,6 +408,25 @@ components:
           type: integer
         outputTokens:
           type: integer
+
+    AgentPortsUpdate:
+      description: |
+        Local server port(s) the agent has opened, detected from its Bash tool
+        activity (command + output). Shown as a persistent badge on the character.
+        (Fork feature, not upstream.)
+      type: object
+      additionalProperties: false
+      required: [type, id, ports]
+      properties:
+        type:
+          const: agentPortsUpdate
+        id:
+          type: integer
+        ports:
+          type: array
+          items:
+            type: string
+          description: List of "host:port" strings, e.g. ["localhost:5173", "localhost:8000"]
 
     LayoutLoaded:
       description: |
