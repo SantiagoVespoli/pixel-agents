@@ -22,8 +22,15 @@ export const CLEAR_IDLE_THRESHOLD_MS = 2000;
 export const EXTERNAL_SCAN_INTERVAL_MS = 3000;
 /** Only adopt JSONL files modified within this window */
 export const EXTERNAL_ACTIVE_THRESHOLD_MS = 120_000; // 2 minutes
-/** Remove external agents after this much inactivity */
-// export const EXTERNAL_STALE_TIMEOUT_MS = 300_000; // 5 minutes - deprecated
+/**
+ * How long an external agent's JSONL file may go untouched before the agent is
+ * reaped as a ghost. Sessions that die WITHOUT firing SessionEnd (terminal
+ * closed, SSH dropped, process killed, crash) are never collected by
+ * SessionEnd-based cleanup and otherwise pile up as permanent IDLE characters.
+ * Kept generous because a still-alive idle session is re-created on its next
+ * hook event, so reaping is safe and fully recoverable.
+ */
+export const EXTERNAL_STALE_TIMEOUT_MS = 1_800_000; // 30 minutes
 export const EXTERNAL_STALE_CHECK_INTERVAL_MS = 30_000;
 /** Cooldown after user closes an agent via X. Must be > EXTERNAL_ACTIVE_THRESHOLD_MS
  *  so the file's mtime becomes stale before the dismissal expires. */
