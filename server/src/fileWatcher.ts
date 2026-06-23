@@ -33,6 +33,7 @@ import {
   EXTERNAL_ACTIVE_THRESHOLD_MS,
   EXTERNAL_SCAN_INTERVAL_MS,
   EXTERNAL_STALE_CHECK_INTERVAL_MS,
+  EXTERNAL_STALE_TIMEOUT_MS,
   FILE_WATCHER_POLL_INTERVAL_MS,
   GLOBAL_SCAN_ACTIVE_MAX_AGE_MS,
   GLOBAL_SCAN_ACTIVE_MIN_SIZE,
@@ -1240,22 +1241,27 @@ function scanGlobalProjectDirs(
 export function startStaleExternalAgentCheck(
   agents: AgentStateStore,
   knownJsonlFiles: Set<string>,
-  hooksEnabledRef?: { current: boolean },
 ): ReturnType<typeof setInterval> {
   return setInterval(() => {
-    // When hooks are active, SessionEnd handles agent cleanup.
-    if (hooksEnabledRef?.current) return;
+    const now = Date.now();
     const toRemove: number[] = [];
 
     for (const [id, agent] of agents) {
       if (!agent.isExternal) continue;
 
-      // Only despawn if the JSONL file has been deleted from disk.
-      // Inactive external agents stay alive so they can resume when
-      // the session continues (e.g., claude --resume).
+      // Despawn if the JSONL file has been deleted, OR if it has gone untouched
+      // for longer than EXTERNAL_STALE_TIMEOUT_MS. The mtime check is the key
+      // safety net: a session that dies without firing SessionEnd (terminal
+      // closed, SSH dropped, process killed, crash) is never collected by
+      // SessionEnd-based cleanup and would otherwise linger forever as an IDLE
+      // ghost — even with hooks enabled. A still-alive idle session is
+      // re-created on its next hook event (e.g. claude --resume), so this is
+      // safe and recoverable.
       try {
-        fs.statSync(agent.jsonlFile);
-        // File still exists — keep the agent alive regardless of mtime
+        const stat = fs.statSync(agent.jsonlFile);
+        if (now - stat.mtimeMs > EXTERNAL_STALE_TIMEOUT_MS) {
+          toRemove.push(id);
+        }
       } catch {
         // File deleted — remove agent
         toRemove.push(id);
