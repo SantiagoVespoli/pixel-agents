@@ -224,16 +224,24 @@ export function useExtensionMessages(
           { palette?: number; hueShift?: number; seatId?: string }
         >;
         const folderNames = (msg.folderNames || {}) as Record<number, string>;
-        // Buffer agents — they'll be added in layoutLoaded after seats are built
+        // If the layout is already loaded, add agents immediately; otherwise buffer
+        // them so layoutLoaded can add them once seats are built. existingAgents can
+        // arrive either before or after layoutLoaded (WS message order isn't
+        // guaranteed), so relying solely on the buffer drops agents whenever
+        // existingAgents arrives last.
         for (const id of incoming) {
           const m = meta[id];
-          pendingAgents.push({
-            id,
-            palette: m?.palette,
-            hueShift: m?.hueShift,
-            seatId: m?.seatId,
-            folderName: folderNames[id],
-          });
+          if (layoutReadyRef.current) {
+            os.addAgent(id, m?.palette, m?.hueShift, m?.seatId, true, folderNames[id]);
+          } else {
+            pendingAgents.push({
+              id,
+              palette: m?.palette,
+              hueShift: m?.hueShift,
+              seatId: m?.seatId,
+              folderName: folderNames[id],
+            });
+          }
         }
         setAgents((prev) => {
           const ids = new Set(prev);
